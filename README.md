@@ -1,8 +1,10 @@
 # Extended Jpa Repository Implementation Base
 
-Whatever project I work on, I always needs project like this. 
-So I take my time and implement this code each project when it needs. 
-I decided to make it independent project as a spring-boot-starter package.
+Whatever project I work on, I always need a project like this.
+So I’ve been taking the time to implement this code in each project whenever it’s needed.
+I finally decided to make it an independent project as a Spring Boot starter package.
+You can use any number of parameters to filter the data. 
+The Criteria.builder() is smart enough to ignore any filter whose value is null. 
 
 ## Usage
 
