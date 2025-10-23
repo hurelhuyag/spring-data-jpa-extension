@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.time.LocalDateTime;
 
@@ -14,6 +17,12 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "exampleData")
+@NamedEntityGraph(
+    name = "ExampleData.withAll",
+    attributeNodes = {
+        @NamedAttributeNode("ref")
+    }
+)
 public class ExampleData {
 
     public enum Type {
@@ -30,6 +39,6 @@ public class ExampleData {
 
     private LocalDateTime createdAt;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private ExampleRef ref;
 }

@@ -3,9 +3,9 @@ package io.github.hurelhuyag.jpa;
 import java.util.regex.Pattern;
 
 /**
- * Filter Crieria
+ * Filter Criteria
  * @param attr entity attribute path
- * @param expr expession
+ * @param expr expression
  * @param arg argument which type is matched to attr type
  */
 public record Criteria(String attr, Expr expr, Object arg) {
@@ -16,5 +16,9 @@ public record Criteria(String attr, Expr expr, Object arg) {
         if (!PATTERN_ATTR.matcher(attr).matches()) {
             throw new IllegalArgumentException("Invalid attribute name: " + attr);
         }
+    }
+
+    public static CB builder() {
+        return new CB();
     }
 }

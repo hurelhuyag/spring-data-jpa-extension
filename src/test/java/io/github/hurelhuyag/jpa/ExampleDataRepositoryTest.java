@@ -1,6 +1,5 @@
 package io.github.hurelhuyag.jpa;
 
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -41,49 +40,63 @@ public class ExampleDataRepositoryTest {
 
     @Test
     void testEqStr() {
-        var r = exampleDataRepository.findAll(List.of(new Criteria("name", Expr.EQ, "name1")), null, Pageable.unpaged());
+        var r = exampleDataRepository.findAll(List.of(new Criteria("name", Expr.EQ, "name1")), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(1);
     }
 
     @Test
     void testEqInt() {
-        var r = exampleDataRepository.findAll(List.of(new Criteria("id", Expr.EQ, 1)), null, Pageable.unpaged());
+        var r = exampleDataRepository.findAll(List.of(new Criteria("id", Expr.EQ, 1)), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(1);
     }
 
     @Test
     void testEqEnum() {
-        var r = exampleDataRepository.findAll(List.of(new Criteria("type", Expr.EQ, ExampleData.Type.A)), null, Pageable.unpaged());
+        var r = exampleDataRepository.findAll(List.of(new Criteria("type", Expr.EQ, ExampleData.Type.A)), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(2);
     }
 
     @Test
     void testInStr() {
-        var r = exampleDataRepository.findAll(List.of(new Criteria("name", Expr.IN, List.of("name1", "name2"))), null, Pageable.unpaged());
+        var r = exampleDataRepository.findAll(List.of(new Criteria("name", Expr.IN, List.of("name1", "name2"))), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(2);
     }
 
     @Test
+    void testInMultiplePredicate() {
+        var r = exampleDataRepository.findAll(
+            Criteria.builder()
+                .eq(ExampleData_.NAME, "name3")
+                .eq(ExampleData_.TYPE, ExampleData.Type.A)
+                .gte(ExampleData_.CREATED_AT, LocalDateTime.of(2020, 1, 1, 1, 2, 1))
+                .build(),
+            ExampleData_.GRAPH_EXAMPLE_DATA_WITH_ALL,
+            Pageable.unpaged()
+        );
+        assertThat(r.getContent()).hasSize(1);
+    }
+
+    @Test
     void testLTE() {
-        var r = exampleDataRepository.findAll(List.of(new Criteria("createdAt", Expr.LTE, LocalDateTime.of(2020, 1, 1, 1, 2, 1))), null, Pageable.unpaged());
+        var r = exampleDataRepository.findAll(List.of(new Criteria("createdAt", Expr.LTE, LocalDateTime.of(2020, 1, 1, 1, 2, 1))), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(2);
     }
 
     @Test
     void testLT() {
-        var r = exampleDataRepository.findAll(List.of(new Criteria("createdAt", Expr.LT, LocalDateTime.of(2020, 1, 1, 1, 2, 1))), null, Pageable.unpaged());
+        var r = exampleDataRepository.findAll(List.of(new Criteria("createdAt", Expr.LT, LocalDateTime.of(2020, 1, 1, 1, 2, 1))), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(1);
     }
 
     @Test
     void testJoin() {
-        var r = exampleDataRepository.findAll(List.of(new Criteria("ref.id", Expr.EQ, 3)), null, Pageable.unpaged());
+        var r = exampleDataRepository.findAll(List.of(new Criteria("ref.id", Expr.EQ, 3)), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(1);
     }
 
     @Test
     void testWithCountQuery() {
-        var r = exampleDataRepository.findAll(List.of(new Criteria("name", Expr.EQ, "name3")), null, PageRequest.of(0, 2));
+        var r = exampleDataRepository.findAll(List.of(new Criteria("name", Expr.EQ, "name3")), "ExampleData.withAll", PageRequest.of(0, 2));
         assertThat(r.getContent()).hasSize(2);
         assertThat(r.getTotalElements()).isEqualTo(3);
     }
