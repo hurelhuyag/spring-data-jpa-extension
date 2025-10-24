@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @EnableJpaRepositories(repositoryBaseClass = ExtendedJpaRepository.class)
+@SpringBootApplication
 class App() {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
