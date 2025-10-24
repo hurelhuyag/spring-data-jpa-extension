@@ -25,6 +25,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@EnableJpaRepositories(repositoryBaseClass = ExtendedJpaRepository.class)
+class App() {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+
 interface PersonRepository extends ExtendedJpaRepository<Person, Long> {
 }
 
