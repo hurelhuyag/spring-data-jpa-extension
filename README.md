@@ -25,7 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@EnableJpaRepositories(repositoryBaseClass = ExtendedJpaRepository.class)
+@EnableJpaRepositories(repositoryBaseClass = ExtendedJpaRepositoryImpl.class)
 @SpringBootApplication
 class App() {
     public static void main(String[] args) {
