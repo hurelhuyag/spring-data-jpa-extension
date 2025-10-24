@@ -24,6 +24,10 @@ VALUES
     (3,'name3', 1, '2020-01-01T01:03:01', 4),
     (4,'name3', 0, '2020-01-01T01:04:01', 1),
     (5,'name3', 1, '2020-01-01T01:05:01', 2);
+""",
+"""
+INSERT INTO exampleChild(id,parent_id,name) 
+VALUES (1, 1, 'child1'),(2, 1, 'child2'),(3, 2, 'child3');
 """
 })
 @DataJpaTest
@@ -91,7 +95,24 @@ public class ExampleDataRepositoryTest {
     @Test
     void testJoin() {
         var r = exampleDataRepository.findAll(List.of(new Criteria("ref.id", Expr.EQ, 3)), "ExampleData.withAll", Pageable.unpaged());
+        System.out.println("before get size");
+        var size = r.getContent().size();
+        System.out.println("after get size. size is: " + size);
+        assertThat(size).isEqualTo(1);
+    }
+
+    @Test
+    void testJoin2() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("children.id", Expr.EQ, 3)), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(1);
+    }
+
+    @Test
+    void testJoin3() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("id", Expr.EQ, 1)), "ExampleData.withChildren", Pageable.unpaged());
+        //assertThat(r.getContent()).hasSize(1);
+        var size = r.getContent().size();
+        assertThat(size).isEqualTo(1);
     }
 
     @Test

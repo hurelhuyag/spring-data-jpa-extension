@@ -10,6 +10,7 @@ import org.hibernate.annotations.FetchMode;
 import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,6 +22,12 @@ import java.time.LocalDateTime;
     name = "ExampleData.withAll",
     attributeNodes = {
         @NamedAttributeNode("ref")
+    }
+)
+@NamedEntityGraph(
+    name = "ExampleData.withChildren",
+    attributeNodes = {
+        @NamedAttributeNode("children")
     }
 )
 public class ExampleData {
@@ -41,4 +48,7 @@ public class ExampleData {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private ExampleRef ref;
+
+    @OneToMany(mappedBy = "parent")
+    private List<ExampleChild> children;
 }

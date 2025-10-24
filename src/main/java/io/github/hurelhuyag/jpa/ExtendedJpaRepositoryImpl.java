@@ -16,7 +16,7 @@ public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> i
     private final EntityManager entityManager;
     private final Class<E> domainClass;
 
-    public ExtendedJpaRepositoryImpl(JpaEntityInformation<E, I> entityInformation, EntityManager em) {
+    public ExtendedJpaRepositoryImpl(JpaEntityInformation<E, ?> entityInformation, EntityManager em) {
         super(entityInformation, em);
         this.entityManager = em;
         this.domainClass = entityInformation.getJavaType();
@@ -69,6 +69,7 @@ public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> i
         if (pageable.isPaged()) {
             q.setFirstResult(pageable.getPageSize() * pageable.getPageNumber());
             q.setMaxResults(pageable.getPageSize());
+            q.setHint("org.hibernate.fetchSize", pageable.getPageSize());
 
             final var countQuery = cb.createQuery(Long.class);
             final var cRoot = countQuery.from(domainClass);

@@ -24,7 +24,21 @@ public class CB {
 
     public CB like(String attr, String value) {
         if (value != null) {
-            criteria.add(new Criteria(attr, Expr.LIKE, value));
+            criteria.add(new Criteria(attr, Expr.LIKE, "%" + value + "%"));
+        }
+        return this;
+    }
+
+    public CB likeStart(String attr, String value) {
+        if (value != null) {
+            criteria.add(new Criteria(attr, Expr.LIKE, value + "%"));
+        }
+        return this;
+    }
+
+    public CB likeEnd(String attr, String value) {
+        if (value != null) {
+            criteria.add(new Criteria(attr, Expr.LIKE,  "%" + value));
         }
         return this;
     }

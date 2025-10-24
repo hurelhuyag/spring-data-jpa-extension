@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @AutoConfiguration
-@EnableJpaRepositories(basePackageClasses = ExtendedJpaRepositoryImpl.class)
+@EnableJpaRepositories(repositoryBaseClass = ExtendedJpaRepositoryImpl.class)
 @ConditionalOnClass(JpaRepository.class)
 public class ExtendedJpaRepositoryAutoConfiguration {
 }

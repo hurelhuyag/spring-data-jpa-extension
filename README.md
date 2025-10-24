@@ -20,6 +20,7 @@ Just import dependency. Spring Boot will auto import configuration.
 
 ```java
 import io.github.hurelhuyag.jpa.Criteria;
+import io.github.hurelhuyag.jpa.Expr;
 import io.github.hurelhuyag.jpa.ExtendedJpaRepository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -48,13 +49,25 @@ class PersonService {
         personRepository.persist(new Person());
     }
 
-    // C.builder()'s methods will ignore predicate if value is null. So You don't need to check value is null or not
+    // Criteria.builder()'s methods will ignore predicate if value is null. So You don't need to check value is null or not
     Page<MyData> findAll(String name, int age, Pageable pageable) {
         return personRepository.findAll(
             Criteria.builder()
                 .like("name", name)
                 .gte("age", age)
                 .build(),
+            "Person.withAll", // declare all relation as lazy and use fetch graph to enable join fetch for required attributes
+            pageable
+        );
+    }
+
+    // If you don't like Criteria.builder(), there is another option. But this works differently
+    Page<MyData> findAll2(String name, int age, Pageable pageable) {
+        return personRepository.findAll(
+            List.of(
+                new Criteria("name", Expr.EQ, name),
+                new Criteria("age", Expr.GTE, age)
+            ),
             "Person.withAll", // declare all relation as lazy and use fetch graph to enable join fetch for required attributes
             pageable
         );
