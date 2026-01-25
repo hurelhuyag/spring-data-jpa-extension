@@ -2,9 +2,10 @@ package io.github.hurelhuyag.jpa;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.time.LocalDateTime;
@@ -49,9 +50,21 @@ public class ExampleDataRepositoryTest {
     }
 
     @Test
+    void testEqStr_list() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("name", Expr.EQ, "name1")), "ExampleData.withAll", Sort.unsorted());
+        assertThat(r).hasSize(1);
+    }
+
+    @Test
     void testEqInt() {
         var r = exampleDataRepository.findAll(List.of(new Criteria("id", Expr.EQ, 1)), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(1);
+    }
+
+    @Test
+    void testEqInt_list() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("id", Expr.EQ, 1)), "ExampleData.withAll", Sort.unsorted());
+        assertThat(r).hasSize(1);
     }
 
     @Test
@@ -61,9 +74,21 @@ public class ExampleDataRepositoryTest {
     }
 
     @Test
+    void testEqEnum_list() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("type", Expr.EQ, ExampleData.Type.A)), "ExampleData.withAll", Sort.unsorted());
+        assertThat(r).hasSize(2);
+    }
+
+    @Test
     void testInStr() {
         var r = exampleDataRepository.findAll(List.of(new Criteria("name", Expr.IN, List.of("name1", "name2"))), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(2);
+    }
+
+    @Test
+    void testInStr_list() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("name", Expr.IN, List.of("name1", "name2"))), "ExampleData.withAll", Sort.unsorted());
+        assertThat(r).hasSize(2);
     }
 
     @Test
@@ -81,15 +106,41 @@ public class ExampleDataRepositoryTest {
     }
 
     @Test
+    void testInMultiplePredicate_list() {
+        var r = exampleDataRepository.findAll(
+            Criteria.builder()
+                .eq(ExampleData_.NAME, "name3")
+                .eq(ExampleData_.TYPE, ExampleData.Type.A)
+                .gte(ExampleData_.CREATED_AT, LocalDateTime.of(2020, 1, 1, 1, 2, 1))
+                .build(),
+            ExampleData_.GRAPH_EXAMPLE_DATA_WITH_ALL,
+            Sort.unsorted()
+        );
+        assertThat(r).hasSize(1);
+    }
+
+    @Test
     void testLTE() {
         var r = exampleDataRepository.findAll(List.of(new Criteria("createdAt", Expr.LTE, LocalDateTime.of(2020, 1, 1, 1, 2, 1))), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(2);
     }
 
     @Test
+    void testLTE_list() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("createdAt", Expr.LTE, LocalDateTime.of(2020, 1, 1, 1, 2, 1))), "ExampleData.withAll", Sort.unsorted());
+        assertThat(r).hasSize(2);
+    }
+
+    @Test
     void testLT() {
         var r = exampleDataRepository.findAll(List.of(new Criteria("createdAt", Expr.LT, LocalDateTime.of(2020, 1, 1, 1, 2, 1))), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(1);
+    }
+
+    @Test
+    void testLT_list() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("createdAt", Expr.LT, LocalDateTime.of(2020, 1, 1, 1, 2, 1))), "ExampleData.withAll", Sort.unsorted());
+        assertThat(r).hasSize(1);
     }
 
     @Test
@@ -102,9 +153,24 @@ public class ExampleDataRepositoryTest {
     }
 
     @Test
+    void testJoin_list() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("ref.id", Expr.EQ, 3)), "ExampleData.withAll", Sort.unsorted());
+        System.out.println("before get size");
+        var size = r.size();
+        System.out.println("after get size. size is: " + size);
+        assertThat(size).isEqualTo(1);
+    }
+
+    @Test
     void testJoin2() {
         var r = exampleDataRepository.findAll(List.of(new Criteria("children.id", Expr.EQ, 3)), "ExampleData.withAll", Pageable.unpaged());
         assertThat(r.getContent()).hasSize(1);
+    }
+
+    @Test
+    void testJoin2_list() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("children.id", Expr.EQ, 3)), "ExampleData.withAll", Sort.unsorted());
+        assertThat(r).hasSize(1);
     }
 
     @Test
@@ -112,6 +178,14 @@ public class ExampleDataRepositoryTest {
         var r = exampleDataRepository.findAll(List.of(new Criteria("id", Expr.EQ, 1)), "ExampleData.withChildren", Pageable.unpaged());
         //assertThat(r.getContent()).hasSize(1);
         var size = r.getContent().size();
+        assertThat(size).isEqualTo(1);
+    }
+
+    @Test
+    void testJoin3_list() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("id", Expr.EQ, 1)), "ExampleData.withChildren", Sort.unsorted());
+        //assertThat(r.getContent()).hasSize(1);
+        var size = r.size();
         assertThat(size).isEqualTo(1);
     }
 

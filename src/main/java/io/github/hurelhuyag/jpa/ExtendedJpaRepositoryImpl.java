@@ -5,6 +5,7 @@ import jakarta.persistence.criteria.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 
@@ -37,6 +38,40 @@ public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> i
     public E persist(E e) {
         entityManager.persist(e);
         return e;
+    }
+
+    @Override
+    public List<E> findAll(List<Criteria> filters, String fetchGraph, Sort sort, int limit) {
+        final var cb = entityManager.getCriteriaBuilder();
+        var cq = cb.createQuery(domainClass);
+        final var root = cq.from(domainClass);
+
+        cq = cq
+            .select(root)
+            .where(buildPredicate(cb, filters, root))
+            .orderBy(
+                sort
+                    .stream()
+                    .map(
+                        o -> o.getDirection().isAscending()
+                                ? cb.asc(root.get(o.getProperty()))
+                                : cb.desc(root.get(o.getProperty()))
+                    )
+                    .toArray(Order[]::new)
+            );
+
+        var q = entityManager.createQuery(cq);
+        if (fetchGraph != null) {
+            q.setHint("jakarta.persistence.fetchgraph", entityManager.getEntityGraph(fetchGraph));
+            //q.setHint("jakarta.persistence.loadgraph", entityManager.getEntityGraph(entityGraph));
+        }
+
+        if (limit > 0) {
+            q.setMaxResults(limit);
+            q.setHint("org.hibernate.fetchSize", limit);
+        }
+
+        return q.getResultList();
     }
 
     @Override
