@@ -6,15 +6,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Set;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @Entity
-@Table(name = "exampleChild")
-public class ExampleChild {
+@Table(name = "exampleGrandChild")
+public class ExampleGrandChild {
 
     @Id
     private Integer id;
@@ -22,8 +20,5 @@ public class ExampleChild {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private ExampleData parent;
-
-    @OneToMany(mappedBy = "parent")
-    private Set<ExampleGrandChild> children;
+    private ExampleChild parent;
 }

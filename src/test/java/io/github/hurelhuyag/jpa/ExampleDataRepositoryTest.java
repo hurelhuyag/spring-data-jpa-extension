@@ -29,6 +29,10 @@ VALUES
 """
 INSERT INTO exampleChild(id,parent_id,name) 
 VALUES (1, 1, 'child1'),(2, 1, 'child2'),(3, 2, 'child3');
+""",
+"""
+INSERT INTO exampleGrandChild(id,parent_id,name) 
+VALUES (1, 1, 'child11'),(2, 1, 'child22'),(3, 2, 'child33');
 """
 })
 @DataJpaTest
@@ -170,6 +174,12 @@ public class ExampleDataRepositoryTest {
     @Test
     void testJoin2_list() {
         var r = exampleDataRepository.findAll(List.of(new Criteria("children.id", Expr.EQ, 3)), "ExampleData.withAll", Sort.unsorted());
+        assertThat(r).hasSize(1);
+    }
+
+    @Test
+    void testJoinNested_list() {
+        var r = exampleDataRepository.findAll(List.of(new Criteria("children.children.id", Expr.EQ, 3)), "ExampleData.withAll", Sort.unsorted());
         assertThat(r).hasSize(1);
     }
 

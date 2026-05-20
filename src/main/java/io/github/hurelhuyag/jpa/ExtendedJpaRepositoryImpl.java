@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.StringTokenizer;
 
 public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> implements ExtendedJpaRepository<E, I>{
 
@@ -130,16 +131,7 @@ public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> i
     private Predicate buildPredicate(CriteriaBuilder cb, Criteria filter, Root<E> root) {
         final var attrPath = filter.attr();
         final var value = filter.arg();
-        final var i = attrPath.indexOf('.');
-        Path<?> attr;
-        if (i > 0) {
-            final var attrPath0 = attrPath.substring(0, i);
-            final var attrPath1 = attrPath.substring(i+1);
-            final var join = root.join(attrPath0);
-            attr = join.get(attrPath1);
-        } else {
-            attr = root.get(attrPath);
-        }
+        final var attr = resolvePath(root, attrPath);
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         var expr = switch (filter.expr()) {
@@ -155,5 +147,19 @@ public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> i
             case IN -> attr.in((Collection<?>) value);
         };
         return expr;
+    }
+
+    private Path<?> resolvePath(From<?, ?> root, String attrPath) {
+        final var tokenizer = new StringTokenizer(attrPath, ".");
+
+        From<?, ?> join = root;
+        var part = tokenizer.nextToken();
+
+        while (tokenizer.hasMoreTokens()) {
+            join = join.join(part);
+            part = tokenizer.nextToken();
+        }
+
+        return join.get(part);
     }
 }
