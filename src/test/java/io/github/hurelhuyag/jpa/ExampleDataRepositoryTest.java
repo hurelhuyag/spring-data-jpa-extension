@@ -200,6 +200,27 @@ public class ExampleDataRepositoryTest {
     }
 
     @Test
+    void testSortByNestedPath() {
+        // Regression: sorting by a dotted association path (ref.name) must navigate joins,
+        // not be treated as a single literal attribute name on the root entity.
+        var r = exampleDataRepository.findAll(List.of(), "ExampleData.withAll", PageRequest.of(0, 10, Sort.by("ref.name").descending()));
+        var content = r.getContent();
+        assertThat(content).hasSize(5);
+        // ref ids in insert order: 2,3,4,1,2 -> ref names ref2,ref3,ref4,ref1,ref2.
+        // Sorted by ref.name desc, the first row must be the one referencing ref4.
+        assertThat(content.get(0).getRef().getName()).isEqualTo("ref4");
+        assertThat(content.get(content.size() - 1).getRef().getName()).isEqualTo("ref1");
+    }
+
+    @Test
+    void testSortByNestedPath_list() {
+        var r = exampleDataRepository.findAll(List.of(), "ExampleData.withAll", Sort.by("ref.name").descending(), 10);
+        assertThat(r).hasSize(5);
+        assertThat(r.get(0).getRef().getName()).isEqualTo("ref4");
+        assertThat(r.get(r.size() - 1).getRef().getName()).isEqualTo("ref1");
+    }
+
+    @Test
     void testWithCountQuery() {
         var r = exampleDataRepository.findAll(List.of(new Criteria("name", Expr.EQ, "name3")), "ExampleData.withAll", PageRequest.of(0, 2));
         assertThat(r.getContent()).hasSize(2);

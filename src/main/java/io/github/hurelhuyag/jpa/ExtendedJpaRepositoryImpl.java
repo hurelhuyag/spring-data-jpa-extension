@@ -55,8 +55,8 @@ public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> i
                     .stream()
                     .map(
                         o -> o.getDirection().isAscending()
-                                ? cb.asc(root.get(o.getProperty()))
-                                : cb.desc(root.get(o.getProperty()))
+                                ? cb.asc(resolvePath(root, o.getProperty()))
+                                : cb.desc(resolvePath(root, o.getProperty()))
                     )
                     .toArray(Order[]::new)
             );
@@ -89,8 +89,8 @@ public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> i
                     .stream()
                     .map(
                         o -> o.getDirection().isAscending()
-                        ? cb.asc(root.get(o.getProperty()))
-                        : cb.desc(root.get(o.getProperty()))
+                        ? cb.asc(resolvePath(root, o.getProperty()))
+                        : cb.desc(resolvePath(root, o.getProperty()))
                     )
                     .toArray(Order[]::new)
             );

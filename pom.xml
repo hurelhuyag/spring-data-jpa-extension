@@ -13,7 +13,7 @@
 
     <groupId>io.github.hurelhuyag</groupId>
     <artifactId>spring-data-jpa-extension</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <name>spring-data-jpa-extension</name>
     <description>the missing feature from spring-data-jpa</description>
     <url>https://github.com/hurelhuyag/spring-data-jpa-extension</url>
