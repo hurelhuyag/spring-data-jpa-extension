@@ -233,4 +233,33 @@ public class ExampleDataRepositoryTest {
         assertThat(r.getContent()).hasSize(1);
         assertThat(r.getTotalElements()).isEqualTo(3);
     }
+
+    @Test
+    void testFindSliceHasNext() {
+        var r = exampleDataRepository.findSlice(List.of(new Criteria("name", Expr.EQ, "name3")), "ExampleData.withAll", PageRequest.of(0, 2));
+        assertThat(r.getContent()).hasSize(2);
+        assertThat(r.hasNext()).isTrue();
+    }
+
+    @Test
+    void testFindSliceLastPage() {
+        var r = exampleDataRepository.findSlice(List.of(new Criteria("name", Expr.EQ, "name3")), null, PageRequest.of(1, 2));
+        assertThat(r.getContent()).hasSize(1);
+        assertThat(r.hasNext()).isFalse();
+    }
+
+    @Test
+    void testFindSliceExactlyPageSize() {
+        // 3 matching rows, pageSize=3 -> last page, hasNext must be false even though page is full.
+        var r = exampleDataRepository.findSlice(List.of(new Criteria("name", Expr.EQ, "name3")), null, PageRequest.of(0, 3));
+        assertThat(r.getContent()).hasSize(3);
+        assertThat(r.hasNext()).isFalse();
+    }
+
+    @Test
+    void testFindSliceUnpaged() {
+        var r = exampleDataRepository.findSlice(List.of(), "ExampleData.withAll", Pageable.unpaged());
+        assertThat(r.getContent()).hasSize(5);
+        assertThat(r.hasNext()).isFalse();
+    }
 }

@@ -5,6 +5,8 @@ import jakarta.persistence.criteria.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
@@ -115,6 +117,49 @@ public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> i
 
         final var result = q.getResultList();
         return new PageImpl<>(result, pageable, total);
+    }
+
+    @Override
+    public Slice<E> findSlice(List<Criteria> filters, String fetchGraph, Pageable pageable) {
+        final var cb = entityManager.getCriteriaBuilder();
+        var cq = cb.createQuery(domainClass);
+        final var root = cq.from(domainClass);
+
+        cq = cq
+            .select(root)
+            .where(buildPredicate(cb, filters, root))
+            .orderBy(
+                pageable.getSort()
+                    .stream()
+                    .map(
+                        o -> o.getDirection().isAscending()
+                        ? cb.asc(resolvePath(root, o.getProperty()))
+                        : cb.desc(resolvePath(root, o.getProperty()))
+                    )
+                    .toArray(Order[]::new)
+            );
+
+        var q = entityManager.createQuery(cq);
+        if (fetchGraph != null) {
+            q.setHint("jakarta.persistence.fetchgraph", entityManager.getEntityGraph(fetchGraph));
+        }
+
+        if (!pageable.isPaged()) {
+            return new SliceImpl<>(q.getResultList(), pageable, false);
+        }
+
+        final int pageSize = pageable.getPageSize();
+        q.setFirstResult(pageSize * pageable.getPageNumber());
+        // Fetch one extra row to detect whether a next page exists, avoiding a COUNT query.
+        q.setMaxResults(pageSize + 1);
+        q.setHint("org.hibernate.fetchSize", pageSize + 1);
+
+        var content = q.getResultList();
+        final boolean hasNext = content.size() > pageSize;
+        if (hasNext) {
+            content = content.subList(0, pageSize);
+        }
+        return new SliceImpl<>(content, pageable, hasNext);
     }
 
     private Predicate buildPredicate(CriteriaBuilder cb, List<Criteria> filters, Root<E> root) {
