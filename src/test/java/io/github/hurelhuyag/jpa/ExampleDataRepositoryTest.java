@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -210,6 +211,35 @@ public class ExampleDataRepositoryTest {
         // Sorted by ref.name desc, the first row must be the one referencing ref4.
         assertThat(content.get(0).getRef().getName()).isEqualTo("ref4");
         assertThat(content.get(content.size() - 1).getRef().getName()).isEqualTo("ref1");
+    }
+
+    /**
+     * Sorting must not filter. The association is optional, so following it with an inner join drops every row
+     * that has none -- out of the page and out of the total -- which is a filter wearing an order's clothes.
+     * <p>
+     * The class fixture gives every row a ref, so nothing above would notice. This one adds a row without.
+     */
+    @Test
+    @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
+    @Sql(statements =
+        "INSERT INTO exampleData(id,name,type,createdAt,ref_id) VALUES (6,'name6',1,'2020-01-01T01:06:01',NULL)")
+    void testSortByNestedPathKeepsRowsWithNoAssociation() {
+        var r = exampleDataRepository.findAll(List.of(), "ExampleData.withAll", Sort.by("ref.name"), 20);
+
+        assertThat(r).hasSize(6);
+        assertThat(r).extracting("id").contains(6);
+    }
+
+    /** The same, through the paged overload, where a dropped row also makes the total wrong. */
+    @Test
+    @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
+    @Sql(statements =
+        "INSERT INTO exampleData(id,name,type,createdAt,ref_id) VALUES (6,'name6',1,'2020-01-01T01:06:01',NULL)")
+    void testSortByNestedPathKeepsRowsWithNoAssociation_paged() {
+        var r = exampleDataRepository.findAll(List.of(), "ExampleData.withAll", PageRequest.of(0, 10, Sort.by("ref.name")));
+
+        assertThat(r.getTotalElements()).isEqualTo(6);
+        assertThat(r.getContent()).hasSize(6);
     }
 
     @Test

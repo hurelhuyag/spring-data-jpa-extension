@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.query.QueryUtils;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 
@@ -52,16 +53,7 @@ public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> i
         cq = cq
             .select(root)
             .where(buildPredicate(cb, filters, root))
-            .orderBy(
-                sort
-                    .stream()
-                    .map(
-                        o -> o.getDirection().isAscending()
-                                ? cb.asc(resolvePath(root, o.getProperty()))
-                                : cb.desc(resolvePath(root, o.getProperty()))
-                    )
-                    .toArray(Order[]::new)
-            );
+            .orderBy(QueryUtils.toOrders(sort, root, cb));
 
         var q = entityManager.createQuery(cq);
         if (fetchGraph != null) {
@@ -86,16 +78,7 @@ public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> i
         cq = cq
             .select(root)
             .where(buildPredicate(cb, filters, root))
-            .orderBy(
-                pageable.getSort()
-                    .stream()
-                    .map(
-                        o -> o.getDirection().isAscending()
-                        ? cb.asc(resolvePath(root, o.getProperty()))
-                        : cb.desc(resolvePath(root, o.getProperty()))
-                    )
-                    .toArray(Order[]::new)
-            );
+            .orderBy(QueryUtils.toOrders(pageable.getSort(), root, cb));
 
         var q = entityManager.createQuery(cq);
         if (fetchGraph != null) {
@@ -128,16 +111,7 @@ public class ExtendedJpaRepositoryImpl<E, I> extends SimpleJpaRepository<E, I> i
         cq = cq
             .select(root)
             .where(buildPredicate(cb, filters, root))
-            .orderBy(
-                pageable.getSort()
-                    .stream()
-                    .map(
-                        o -> o.getDirection().isAscending()
-                        ? cb.asc(resolvePath(root, o.getProperty()))
-                        : cb.desc(resolvePath(root, o.getProperty()))
-                    )
-                    .toArray(Order[]::new)
-            );
+            .orderBy(QueryUtils.toOrders(pageable.getSort(), root, cb));
 
         var q = entityManager.createQuery(cq);
         if (fetchGraph != null) {
