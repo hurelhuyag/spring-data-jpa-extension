@@ -1,0 +1,72 @@
+# Publishes to Maven Central through the Central Portal (https://central.sonatype.com/publishing/deployments).
+#
+# Manual on purpose: publishing is irreversible -- Central never lets a version be replaced -- so a release is
+# something someone asks for, not something a push causes. Run it from the Actions tab.
+#
+# The pom's `central` profile does the actual work: maven-gpg-plugin signs, and central-publishing-maven-plugin
+# uploads the bundle and, with autoPublish=true, releases it without a second click in the portal.
+#
+# Four repository secrets are required (Settings -> Secrets and variables -> Actions):
+#   CENTRAL_USERNAME, CENTRAL_PASSWORD  the user token from https://central.sonatype.com/account -- the
+#                                       generated token pair, NOT the portal login
+#   GPG_PRIVATE_KEY                     the signing key, armoured: gpg --armor --export-secret-keys <key>
+#   GPG_PASSPHRASE                      that key's passphrase
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, e.g. 1.0.7. Leave empty to publish the version already in pom.xml."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to Maven Central
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+          # Writes a settings.xml with a `central` server whose credentials come from the environment below,
+          # and imports the signing key. server-username/server-password name environment variables, not values.
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
+
+      - name: Set the version being published
+        if: inputs.version != ''
+        run: mvn -B -ntp versions:set -DnewVersion='${{ inputs.version }}' -DgenerateBackupPoms=false
+
+      # Before anything is signed or uploaded: Central will not take a version twice, so a failing build has to
+      # fail here rather than halfway through a deployment.
+      - name: Build and test
+        run: mvn -B -ntp verify
+
+      - name: Publish
+        run: mvn -B -ntp -Pcentral deploy -DskipTests
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Upload Surefire reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/**
+          if-no-files-found: ignore

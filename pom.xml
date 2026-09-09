@@ -38,6 +38,20 @@
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!--
+          Signing, as the `central` profile below uses it.
+
+          Empty key name by default, which tells gpg to sign with its default secret key. That is what CI wants:
+          the workflow imports exactly one key, so naming it would only be one more secret to keep in step. Pass
+          -Dgpg.keyname=<key> to sign with a particular key on a machine that holds several.
+
+          The passphrase is read from a settings.xml server rather than a property, so it never appears on a
+          command line. `gpg.passphrase` is the id actions/setup-java writes it under, and is also the plugin's
+          own default; override it if your local settings.xml keeps the passphrase somewhere else.
+        -->
+        <gpg.keyname/>
+        <gpg.passphraseServerId>gpg.passphrase</gpg.passphraseServerId>
     </properties>
 
     <dependencies>
@@ -185,7 +199,7 @@
                                 </goals>
                                 <configuration>
                                     <keyname>${gpg.keyname}</keyname>
-                                    <passphraseServerId>${gpg.keyname}</passphraseServerId>
+                                    <passphraseServerId>${gpg.passphraseServerId}</passphraseServerId>
                                     <gpgArguments>
                                         <gpgArgument>--pinentry-mode</gpgArgument>
                                         <gpgArgument>loopback</gpgArgument>
