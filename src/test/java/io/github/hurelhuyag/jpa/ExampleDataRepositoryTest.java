@@ -178,6 +178,56 @@ public class ExampleDataRepositoryTest {
         assertThat(r).hasSize(1);
     }
 
+    /**
+     * A filter through a collection answers each root once, however many elements match: data 1 has two
+     * children named child*, data 2 one. A join would have returned data 1 twice -- and on a page, a duplicate
+     * is a row missing off the end and a count that is wrong.
+     */
+    @Test
+    void testCollectionFilterDoesNotDuplicateRoots() {
+        var page = exampleDataRepository.findAll(List.of(new Criteria("children.name", Expr.LIKE, "child%")), "ExampleData.withAll", PageRequest.of(0, 10));
+        assertThat(page.getContent()).extracting(ExampleData::getId).containsExactlyInAnyOrder(1, 2);
+        assertThat(page.getTotalElements()).isEqualTo(2);
+
+        var list = exampleDataRepository.findAll(List.of(new Criteria("children.name", Expr.LIKE, "child%")), "ExampleData.withAll", Sort.unsorted());
+        assertThat(list).extracting(ExampleData::getId).containsExactlyInAnyOrder(1, 2);
+    }
+
+    /** Two filters through the same collection ask for one element satisfying both, as a join would have. */
+    @Test
+    void testFiltersOnTheSameCollectionMatchTheSameElement() {
+        var same = exampleDataRepository.findAll(
+            List.of(new Criteria("children.id", Expr.EQ, 1), new Criteria("children.name", Expr.EQ, "child1")),
+            "ExampleData.withAll", Sort.unsorted()
+        );
+        assertThat(same).extracting(ExampleData::getId).containsExactly(1);
+
+        var different = exampleDataRepository.findAll(
+            List.of(new Criteria("children.id", Expr.EQ, 1), new Criteria("children.name", Expr.EQ, "child2")),
+            "ExampleData.withAll", Sort.unsorted()
+        );
+        assertThat(different).isEmpty();
+    }
+
+    /** A collection filter beside a plain one: the plain one stays on the root, the other becomes the EXISTS. */
+    @Test
+    void testCollectionFilterCombinesWithRootFilter() {
+        var r = exampleDataRepository.findAll(
+            List.of(new Criteria("children.name", Expr.LIKE, "child%"), new Criteria("name", Expr.EQ, "name2")),
+            "ExampleData.withAll", Sort.unsorted()
+        );
+        assertThat(r).extracting(ExampleData::getId).containsExactly(2);
+    }
+
+    /** An unpaged page is the whole answer, and says so: its total is its size, not the -1 it used to carry. */
+    @Test
+    void testUnpagedPageKnowsItsTotal() {
+        var page = exampleDataRepository.findAll(List.of(), "ExampleData.withAll", Pageable.unpaged());
+        assertThat(page.getContent()).hasSize(5);
+        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(page.getTotalPages()).isEqualTo(1);
+    }
+
     @Test
     void testJoinNested_list() {
         var r = exampleDataRepository.findAll(List.of(new Criteria("children.children.id", Expr.EQ, 3)), "ExampleData.withAll", Sort.unsorted());
