@@ -71,7 +71,7 @@ public class CB {
         return this;
     }
 
-    public CB in(String attr, Collection<Object> value) {
+    public CB in(String attr, Collection<?> value) {
         if (value != null) {
             criteria.add(new Criteria(attr, Expr.IN, value));
         }
